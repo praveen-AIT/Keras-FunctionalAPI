@@ -286,3 +286,597 @@ vqa_model = Model(inputs=[image_input, question_input], outputs=output)
 
 # The next stage would be training this model on actual data.
 ```
+
+# Now just to give the final overview and puting it all in the steps form:
+
+# 1. Defining Input
+Unlike the Sequential model, you must create and define a standalone Input layer that specifies the shape of input data.
+
+The input layer takes a shape argument that is a tuple that indicates the dimensionality of the input data.
+
+When input data is one-dimensional, such as for a multilayer Perceptron, the shape must explicitly leave room for the shape of the mini-batch size used when splitting the data when training the network. Therefore, the shape tuple is always defined with a hanging last dimension when the input is one-dimensional (2,), for example:
+
+```
+from keras.layers import Input
+visible = Input(shape=(2,))
+```
+
+# 2. Connecting Layers
+The layers in the model are connected pairwise.
+
+This is done by specifying where the input comes from when defining each new layer. A bracket notation is used, such that after the layer is created, the layer from which the input to the current layer comes from is specified.
+
+Let’s make this clear with a short example. We can create the input layer as above, then create a hidden layer as a Dense that receives input only from the input layer.
+
+```
+from keras.layers import Input
+from keras.layers import Dense
+visible = Input(shape=(2,))
+hidden = Dense(2)(visible)
+```
+
+Note the (visible) after the creation of the Dense layer that connects the input layer output as the input to the dense hidden layer.
+
+It is this way of connecting layers piece by piece that gives the functional API its flexibility. For example, you can see how easy it would be to start defining ad hoc graphs of layers.
+
+# 3. Creating the Model
+After creating all of your model layers and connecting them together, you must define the model.
+
+As with the Sequential API, the model is the thing you can summarize, fit, evaluate, and use to make predictions.
+
+Keras provides a Model class that you can use to create a model from your created layers. It requires that you only specify the input and output layers. For example:
+
+```
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+visible = Input(shape=(2,))
+hidden = Dense(2)(visible)
+model = Model(inputs=visible, outputs=hidden)
+```
+
+Now that we know all of the key pieces of the Keras functional API, let’s work through defining a suite of different models and build up some practice with it.
+
+Each example is executable and prints the structure and creates a diagram of the graph. I recommend doing this for your own models to make it clear what exactly you have defined.
+
+My hope is that these examples provide templates for you when you want to define your own models using the functional API in the future.
+
+# 3. Standard Network Models
+When getting started with the functional API, it is a good idea to see how some standard neural network models are defined.
+
+In this section, we will look at defining a simple multilayer Perceptron, convolutional neural network, and recurrent neural network.
+
+These examples will provide a foundation for understanding the more elaborate examples later.
+
+Multilayer Perceptron
+In this section, we define a multilayer Perceptron model for binary classification.
+
+The model has 10 inputs, 3 hidden layers with 10, 20, and 10 neurons, and an output layer with 1 output. Rectified linear activation functions are used in each hidden layer and a sigmoid activation function is used in the output layer, for binary classification.
+
+```
+# Multilayer Perceptron
+from keras.utils import plot_model
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+visible = Input(shape=(10,))
+hidden1 = Dense(10, activation='relu')(visible)
+hidden2 = Dense(20, activation='relu')(hidden1)
+hidden3 = Dense(10, activation='relu')(hidden2)
+output = Dense(1, activation='sigmoid')(hidden3)
+model = Model(inputs=visible, outputs=output)
+# summarize layers
+print(model.summary())
+# plot graph
+plot_model(model, to_file='multilayer_perceptron_graph.png')
+```
+
+Running the example prints the structure of the network.
+
+
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #
+=================================================================
+input_1 (InputLayer)         (None, 10)                0
+_________________________________________________________________
+dense_1 (Dense)              (None, 10)                110
+_________________________________________________________________
+dense_2 (Dense)              (None, 20)                220
+_________________________________________________________________
+dense_3 (Dense)              (None, 10)                210
+_________________________________________________________________
+dense_4 (Dense)              (None, 1)                 11
+=================================================================
+Total params: 551
+Trainable params: 551
+Non-trainable params: 0
+_________________________________________________________________
+
+A plot of the model graph is also created and saved to file.
+
+![alt text](https://3qeqpr26caki16dnhd19sv6by6v-wpengine.netdna-ssl.com/wp-content/uploads/2017/08/multilayer_perceptron_graph.png)
+
+Convolutional Neural Network
+In this section, we will define a convolutional neural network for image classification.
+
+The model receives black and white 64×64 images as input, then has a sequence of two convolutional and pooling layers as feature extractors, followed by a fully connected layer to interpret the features and an output layer with a sigmoid activation for two-class predictions.
+
+```
+# Convolutional Neural Network
+from keras.utils import plot_model
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+from keras.layers import Flatten
+from keras.layers.convolutional import Conv2D
+from keras.layers.pooling import MaxPooling2D
+visible = Input(shape=(64,64,1))
+conv1 = Conv2D(32, kernel_size=4, activation='relu')(visible)
+pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+conv2 = Conv2D(16, kernel_size=4, activation='relu')(pool1)
+pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+flat = Flatten()(pool2)
+hidden1 = Dense(10, activation='relu')(flat)
+output = Dense(1, activation='sigmoid')(hidden1)
+model = Model(inputs=visible, outputs=output)
+# summarize layers
+print(model.summary())
+# plot graph
+plot_model(model, to_file='convolutional_neural_network.png')
+Running the example summarizes the model layers.
+```
+
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_1 (InputLayer)         (None, 64, 64, 1)         0         
+_________________________________________________________________
+conv2d_1 (Conv2D)            (None, 61, 61, 32)        544       
+_________________________________________________________________
+max_pooling2d_1 (MaxPooling2 (None, 30, 30, 32)        0         
+_________________________________________________________________
+conv2d_2 (Conv2D)            (None, 27, 27, 16)        8208      
+_________________________________________________________________
+max_pooling2d_2 (MaxPooling2 (None, 13, 13, 16)        0         
+_________________________________________________________________
+flatten_1 (Flatten)          (None, 2704)              0         
+_________________________________________________________________
+dense_1 (Dense)              (None, 10)                27050     
+_________________________________________________________________
+dense_2 (Dense)              (None, 1)                 11        
+=================================================================
+Total params: 35,813
+Trainable params: 35,813
+Non-trainable params: 0
+_________________________________________________________________
+
+A plot of the model graph is also created and saved to file.
+
+![alt_text](https://3qeqpr26caki16dnhd19sv6by6v-wpengine.netdna-ssl.com/wp-content/uploads/2017/10/convolutional_neural_network.png)
+
+# Recurrent Neural Network
+In this section, we will define a long short-term memory recurrent neural network for sequence classification.
+
+The model expects 100 time steps of one feature as input. The model has a single LSTM hidden layer to extract features from the sequence, followed by a fully connected layer to interpret the LSTM output, followed by an output layer for making binary predictions.
+
+```
+# Recurrent Neural Network
+from keras.utils import plot_model
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+from keras.layers.recurrent import LSTM
+visible = Input(shape=(100,1))
+hidden1 = LSTM(10)(visible)
+hidden2 = Dense(10, activation='relu')(hidden1)
+output = Dense(1, activation='sigmoid')(hidden2)
+model = Model(inputs=visible, outputs=output)
+# summarize layers
+print(model.summary())
+# plot graph
+plot_model(model, to_file='recurrent_neural_network.png')
+```
+
+Running the example summarizes the model layers.
+
+
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #
+=================================================================
+input_1 (InputLayer)         (None, 100, 1)            0
+_________________________________________________________________
+lstm_1 (LSTM)                (None, 10)                480
+_________________________________________________________________
+dense_1 (Dense)              (None, 10)                110
+_________________________________________________________________
+dense_2 (Dense)              (None, 1)                 11
+=================================================================
+Total params: 601
+Trainable params: 601
+Non-trainable params: 0
+_________________________________________________________________
+
+A plot of the model graph is also created and saved to file.
+
+![alt_text](https://3qeqpr26caki16dnhd19sv6by6v-wpengine.netdna-ssl.com/wp-content/uploads/2017/08/recurrent_neural_network.png)
+
+# 4. Shared Layers Model
+Multiple layers can share the output from one layer.
+
+For example, there may be multiple different feature extraction layers from an input, or multiple layers used to interpret the output from a feature extraction layer.
+
+Let’s look at both of these examples.
+
+Shared Input Layer
+In this section, we define multiple convolutional layers with differently sized kernels to interpret an image input.
+
+The model takes black and white images with the size 64×64 pixels. There are two CNN feature extraction submodels that share this input; the first has a kernel size of 4 and the second a kernel size of 8. The outputs from these feature extraction submodels are flattened into vectors and concatenated into one long vector and passed on to a fully connected layer for interpretation before a final output layer makes a binary classification.
+
+```
+from keras.utils import plot_model
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+from keras.layers import Flatten
+from keras.layers.convolutional import Conv2D
+from keras.layers.pooling import MaxPooling2D
+from keras.layers.merge import concatenate
+# input layer
+visible = Input(shape=(64,64,1))
+# first feature extractor
+conv1 = Conv2D(32, kernel_size=4, activation='relu')(visible)
+pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+flat1 = Flatten()(pool1)
+# second feature extractor
+conv2 = Conv2D(16, kernel_size=8, activation='relu')(visible)
+pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+flat2 = Flatten()(pool2)
+# merge feature extractors
+merge = concatenate([flat1, flat2])
+# interpretation layer
+hidden1 = Dense(10, activation='relu')(merge)
+# prediction output
+output = Dense(1, activation='sigmoid')(hidden1)
+model = Model(inputs=visible, outputs=output)
+# summarize layers
+print(model.summary())
+# plot graph
+plot_model(model, to_file='shared_input_layer.png')
+```
+
+Running the example summarizes the model layers.
+
+____________________________________________________________________________________________________
+Layer (type)                     Output Shape          Param #     Connected to
+====================================================================================================
+input_1 (InputLayer)             (None, 64, 64, 1)     0
+____________________________________________________________________________________________________
+conv2d_1 (Conv2D)                (None, 61, 61, 32)    544         input_1[0][0]
+____________________________________________________________________________________________________
+conv2d_2 (Conv2D)                (None, 57, 57, 16)    1040        input_1[0][0]
+____________________________________________________________________________________________________
+max_pooling2d_1 (MaxPooling2D)   (None, 30, 30, 32)    0           conv2d_1[0][0]
+____________________________________________________________________________________________________
+max_pooling2d_2 (MaxPooling2D)   (None, 28, 28, 16)    0           conv2d_2[0][0]
+____________________________________________________________________________________________________
+flatten_1 (Flatten)              (None, 28800)         0           max_pooling2d_1[0][0]
+____________________________________________________________________________________________________
+flatten_2 (Flatten)              (None, 12544)         0           max_pooling2d_2[0][0]
+____________________________________________________________________________________________________
+concatenate_1 (Concatenate)      (None, 41344)         0           flatten_1[0][0]
+                                                                   flatten_2[0][0]
+____________________________________________________________________________________________________
+dense_1 (Dense)                  (None, 10)            413450      concatenate_1[0][0]
+____________________________________________________________________________________________________
+dense_2 (Dense)                  (None, 1)             11          dense_1[0][0]
+====================================================================================================
+Total params: 415,045
+Trainable params: 415,045
+Non-trainable params: 0
+____________________________________________________________________________________________________
+
+A plot of the model graph is also created and saved to file.
+
+![alt_text](https://3qeqpr26caki16dnhd19sv6by6v-wpengine.netdna-ssl.com/wp-content/uploads/2017/08/shared_input_layer.png)
+
+# Shared Feature Extraction Layer
+In this section, we will use two parallel submodels to interpret the output of an LSTM feature extractor for sequence classification.
+
+The input to the model is 100 time steps of 1 feature. An LSTM layer with 10 memory cells interprets this sequence. The first interpretation model is a shallow single fully connected layer, the second is a deep 3 layer model. The output of both interpretation models are concatenated into one long vector that is passed to the output layer used to make a binary prediction.
+
+```
+# Shared Feature Extraction Layer
+from keras.utils import plot_model
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+from keras.layers.recurrent import LSTM
+from keras.layers.merge import concatenate
+# define input
+visible = Input(shape=(100,1))
+# feature extraction
+extract1 = LSTM(10)(visible)
+# first interpretation model
+interp1 = Dense(10, activation='relu')(extract1)
+# second interpretation model
+interp11 = Dense(10, activation='relu')(extract1)
+interp12 = Dense(20, activation='relu')(interp11)
+interp13 = Dense(10, activation='relu')(interp12)
+# merge interpretation
+merge = concatenate([interp1, interp13])
+# output
+output = Dense(1, activation='sigmoid')(merge)
+model = Model(inputs=visible, outputs=output)
+# summarize layers
+print(model.summary())
+# plot graph
+plot_model(model, to_file='shared_feature_extractor.png')
+```
+
+Running the example summarizes the model layers.
+
+Layer (type)                     Output Shape          Param #     Connected to
+====================================================================================================
+input_1 (InputLayer)             (None, 100, 1)        0
+____________________________________________________________________________________________________
+lstm_1 (LSTM)                    (None, 10)            480         input_1[0][0]
+____________________________________________________________________________________________________
+dense_2 (Dense)                  (None, 10)            110         lstm_1[0][0]
+____________________________________________________________________________________________________
+dense_3 (Dense)                  (None, 20)            220         dense_2[0][0]
+____________________________________________________________________________________________________
+dense_1 (Dense)                  (None, 10)            110         lstm_1[0][0]
+____________________________________________________________________________________________________
+dense_4 (Dense)                  (None, 10)            210         dense_3[0][0]
+____________________________________________________________________________________________________
+concatenate_1 (Concatenate)      (None, 20)            0           dense_1[0][0]
+                                                                   dense_4[0][0]
+____________________________________________________________________________________________________
+dense_5 (Dense)                  (None, 1)             21          concatenate_1[0][0]
+====================================================================================================
+Total params: 1,151
+Trainable params: 1,151
+Non-trainable params: 0
+
+A plot of the model graph is also created and saved to file.
+
+![alt_text](https://3qeqpr26caki16dnhd19sv6by6v-wpengine.netdna-ssl.com/wp-content/uploads/2017/08/shared_feature_extractor.png)
+
+# 5. Multiple Input and Output Models
+The functional API can also be used to develop more complex models with multiple inputs, possibly with different modalities. It can also be used to develop models that produce multiple outputs.
+
+We will look at examples of each in this section.
+
+Multiple Input Model
+We will develop an image classification model that takes two versions of the image as input, each of a different size. Specifically a black and white 64×64 version and a color 32×32 version. Separate feature extraction CNN models operate on each, then the results from both models are concatenated for interpretation and ultimate prediction.
+
+Note that in the creation of the Model() instance, that we define the two input layers as an array. Specifically:
+
+```
+model = Model(inputs=[visible1, visible2], outputs=output)
+```
+
+The complete example is listed below.
+
+```
+
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+# Multiple Inputs
+from keras.utils import plot_model
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+from keras.layers import Flatten
+from keras.layers.convolutional import Conv2D
+from keras.layers.pooling import MaxPooling2D
+from keras.layers.merge import concatenate
+# first input model
+visible1 = Input(shape=(64,64,1))
+conv11 = Conv2D(32, kernel_size=4, activation='relu')(visible1)
+pool11 = MaxPooling2D(pool_size=(2, 2))(conv11)
+conv12 = Conv2D(16, kernel_size=4, activation='relu')(pool11)
+pool12 = MaxPooling2D(pool_size=(2, 2))(conv12)
+flat1 = Flatten()(pool12)
+# second input model
+visible2 = Input(shape=(32,32,3))
+conv21 = Conv2D(32, kernel_size=4, activation='relu')(visible2)
+pool21 = MaxPooling2D(pool_size=(2, 2))(conv21)
+conv22 = Conv2D(16, kernel_size=4, activation='relu')(pool21)
+pool22 = MaxPooling2D(pool_size=(2, 2))(conv22)
+flat2 = Flatten()(pool22)
+# merge input models
+merge = concatenate([flat1, flat2])
+# interpretation model
+hidden1 = Dense(10, activation='relu')(merge)
+hidden2 = Dense(10, activation='relu')(hidden1)
+output = Dense(1, activation='sigmoid')(hidden2)
+model = Model(inputs=[visible1, visible2], outputs=output)
+# summarize layers
+print(model.summary())
+# plot graph
+plot_model(model, to_file='multiple_inputs.png')
+```
+
+Running the example summarizes the model layers.
+
+
+____________________________________________________________________________________________________
+Layer (type)                     Output Shape          Param #     Connected to
+====================================================================================================
+input_1 (InputLayer)             (None, 64, 64, 1)     0
+____________________________________________________________________________________________________
+input_2 (InputLayer)             (None, 32, 32, 3)     0
+____________________________________________________________________________________________________
+conv2d_1 (Conv2D)                (None, 61, 61, 32)    544         input_1[0][0]
+____________________________________________________________________________________________________
+conv2d_3 (Conv2D)                (None, 29, 29, 32)    1568        input_2[0][0]
+____________________________________________________________________________________________________
+max_pooling2d_1 (MaxPooling2D)   (None, 30, 30, 32)    0           conv2d_1[0][0]
+____________________________________________________________________________________________________
+max_pooling2d_3 (MaxPooling2D)   (None, 14, 14, 32)    0           conv2d_3[0][0]
+____________________________________________________________________________________________________
+conv2d_2 (Conv2D)                (None, 27, 27, 16)    8208        max_pooling2d_1[0][0]
+____________________________________________________________________________________________________
+conv2d_4 (Conv2D)                (None, 11, 11, 16)    8208        max_pooling2d_3[0][0]
+____________________________________________________________________________________________________
+max_pooling2d_2 (MaxPooling2D)   (None, 13, 13, 16)    0           conv2d_2[0][0]
+____________________________________________________________________________________________________
+max_pooling2d_4 (MaxPooling2D)   (None, 5, 5, 16)      0           conv2d_4[0][0]
+____________________________________________________________________________________________________
+flatten_1 (Flatten)              (None, 2704)          0           max_pooling2d_2[0][0]
+____________________________________________________________________________________________________
+flatten_2 (Flatten)              (None, 400)           0           max_pooling2d_4[0][0]
+____________________________________________________________________________________________________
+concatenate_1 (Concatenate)      (None, 3104)          0           flatten_1[0][0]
+                                                                   flatten_2[0][0]
+____________________________________________________________________________________________________
+dense_1 (Dense)                  (None, 10)            31050       concatenate_1[0][0]
+____________________________________________________________________________________________________
+dense_2 (Dense)                  (None, 10)            110         dense_1[0][0]
+____________________________________________________________________________________________________
+dense_3 (Dense)                  (None, 1)             11          dense_2[0][0]
+====================================================================================================
+Total params: 49,699
+Trainable params: 49,699
+Non-trainable params: 0
+
+A plot of the model graph is also created and saved to file.
+
+![alt_text](https://3qeqpr26caki16dnhd19sv6by6v-wpengine.netdna-ssl.com/wp-content/uploads/2017/08/multiple_inputs.png)
+
+# Multiple Output Model
+In this section, we will develop a model that makes two different types of predictions. Given an input sequence of 100 time steps of one feature, the model will both classify the sequence and output a new sequence with the same length.
+
+An LSTM layer interprets the input sequence and returns the hidden state for each time step. The first output model creates a stacked LSTM, interprets the features, and makes a binary prediction. The second output model uses the same output layer to make a real-valued prediction for each input time step.
+
+```
+# Multiple Outputs
+from keras.utils import plot_model
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+from keras.layers.recurrent import LSTM
+from keras.layers.wrappers import TimeDistributed
+# input layer
+visible = Input(shape=(100,1))
+# feature extraction
+extract = LSTM(10, return_sequences=True)(visible)
+# classification output
+class11 = LSTM(10)(extract)
+class12 = Dense(10, activation='relu')(class11)
+output1 = Dense(1, activation='sigmoid')(class12)
+# sequence output
+output2 = TimeDistributed(Dense(1, activation='linear'))(extract)
+# output
+model = Model(inputs=visible, outputs=[output1, output2])
+# summarize layers
+print(model.summary())
+# plot graph
+plot_model(model, to_file='multiple_outputs.png')
+```
+
+Running the example summarizes the model layers.
+
+
+
+____________________________________________________________________________________________________
+Layer (type)                     Output Shape          Param #     Connected to
+====================================================================================================
+input_1 (InputLayer)             (None, 100, 1)        0
+____________________________________________________________________________________________________
+lstm_1 (LSTM)                    (None, 100, 10)       480         input_1[0][0]
+____________________________________________________________________________________________________
+lstm_2 (LSTM)                    (None, 10)            840         lstm_1[0][0]
+____________________________________________________________________________________________________
+dense_1 (Dense)                  (None, 10)            110         lstm_2[0][0]
+____________________________________________________________________________________________________
+dense_2 (Dense)                  (None, 1)             11          dense_1[0][0]
+____________________________________________________________________________________________________
+time_distributed_1 (TimeDistribu (None, 100, 1)        11          lstm_1[0][0]
+====================================================================================================
+Total params: 1,452
+Trainable params: 1,452
+Non-trainable params: 0
+
+A plot of the model graph is also created and saved to file.
+
+![alt_text](https://3qeqpr26caki16dnhd19sv6by6v-wpengine.netdna-ssl.com/wp-content/uploads/2017/08/multiple_outputs.png)
+
+# 6. Best Practices
+In this section, I want to give you some tips to get the most out of the functional API when you are defining your own models.
+
+Consistent Variable Names. Use the same variable name for the input (visible) and output layers (output) and perhaps even the hidden layers (hidden1, hidden2). It will help to connect things together correctly.
+Review Layer Summary. Always print the model summary and review the layer outputs to ensure that the model was connected together as you expected.
+Review Graph Plots. Always create a plot of the model graph and review it to ensure that everything was put together as you intended.
+Name the layers. You can assign names to layers that are used when reviewing summaries and plots of the model graph. For example: Dense(1, name=’hidden1′).
+Separate Submodels. Consider separating out the development of submodels and combine the submodels together at the end.
+
+# 7. Note on the Functional API Python Syntax
+If you are new or new-ish to Python the syntax used in the functional API may be confusing.
+
+For example, given:
+
+```
+...
+dense1 = Dense(32)(input)
+...
+```
+
+What does the double bracket syntax do?
+
+What does it mean?
+
+It looks confusing, but it is not a special python thing, just one line doing two things.
+
+The first bracket “(32)” creates the layer via the class constructor, the second bracket “(input)” is a function with no name implemented via the __call__() function, that when called will connect the layers.
+
+The __call__() function is a default function on all Python objects that can be overridden and is used to “call” an instantiated object. Just like the __init__() function is a default function on all objects called just after instantiating an object to initialize it.
+
+We can do the same thing in two lines:
+
+```
+# create layer
+dense1 = Dense(32)
+# connect layer to previous layer
+dense1(input)
+```
+
+I guess we could also call the __call__() function on the object explicitly, although I have never tried:
+
+```
+# create layer
+dense1 = Dense(32)
+# connect layer to previous layer
+dense1.__call_(input)
+```
