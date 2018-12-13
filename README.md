@@ -375,7 +375,7 @@ Running the example prints the structure of the network.
 
 
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param 
 =================================================================
 input_1 (InputLayer)         (None, 10)                0
 _________________________________________________________________
@@ -427,7 +427,7 @@ Running the example summarizes the model layers.
 ```
 
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #   
+Layer (type)                 Output Shape              Param    
 =================================================================
 input_1 (InputLayer)         (None, 64, 64, 1)         0         
 _________________________________________________________________
@@ -481,7 +481,7 @@ Running the example summarizes the model layers.
 
 
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param 
 =================================================================
 input_1 (InputLayer)         (None, 100, 1)            0
 _________________________________________________________________
@@ -547,7 +547,7 @@ plot_model(model, to_file='shared_input_layer.png')
 Running the example summarizes the model layers.
 
 ____________________________________________________________________________________________________
-Layer (type)                     Output Shape          Param #     Connected to
+Layer (type)                     Output Shape          Param      Connected to
 ====================================================================================================
 input_1 (InputLayer)             (None, 64, 64, 1)     0
 ____________________________________________________________________________________________________
@@ -615,7 +615,7 @@ plot_model(model, to_file='shared_feature_extractor.png')
 
 Running the example summarizes the model layers.
 
-Layer (type)                     Output Shape          Param #     Connected to
+Layer (type)                     Output Shape          Param      Connected to
 ====================================================================================================
 input_1 (InputLayer)             (None, 100, 1)        0
 ____________________________________________________________________________________________________
@@ -659,39 +659,6 @@ model = Model(inputs=[visible1, visible2], outputs=output)
 The complete example is listed below.
 
 ```
-
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
 # Multiple Inputs
 from keras.utils import plot_model
 from keras.models import Model
@@ -732,7 +699,7 @@ Running the example summarizes the model layers.
 
 
 ____________________________________________________________________________________________________
-Layer (type)                     Output Shape          Param #     Connected to
+Layer (type)                     Output Shape          Param      Connected to
 ====================================================================================================
 input_1 (InputLayer)             (None, 64, 64, 1)     0
 ____________________________________________________________________________________________________
@@ -808,10 +775,8 @@ plot_model(model, to_file='multiple_outputs.png')
 
 Running the example summarizes the model layers.
 
-
-
 ____________________________________________________________________________________________________
-Layer (type)                     Output Shape          Param #     Connected to
+Layer (type)                     Output Shape          Param      Connected to
 ====================================================================================================
 input_1 (InputLayer)             (None, 100, 1)        0
 ____________________________________________________________________________________________________
